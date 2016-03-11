@@ -19,6 +19,7 @@ import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import x.mvmn.util.mqttgui.util.StackTraceUtil;
@@ -29,6 +30,7 @@ public class MqttClientGui extends JPanel {
 	private static final long serialVersionUID = -1040358216365429952L;
 
 	protected final IMqttAsyncClient client;
+	protected final MqttConnectOptions mqttConnectOptions;
 
 	protected JTextArea txaMainLog = new JTextArea();
 	protected JButton btnClear = new JButton("Clear log");
@@ -47,10 +49,11 @@ public class MqttClientGui extends JPanel {
 	protected JTextArea txPublishText = new JTextArea("Hello");
 	protected final JButton btnPublish = new JButton("Publish");
 
-	public MqttClientGui(final IMqttAsyncClient client) {
+	public MqttClientGui(final IMqttAsyncClient client, final MqttConnectOptions mqttConnectOptions) {
 		super(new BorderLayout());
 
 		this.client = client;
+		this.mqttConnectOptions = mqttConnectOptions;
 
 		client.setCallback(new MqttCallback() {
 			public void messageArrived(String topic, MqttMessage message) throws Exception {
@@ -135,7 +138,7 @@ public class MqttClientGui extends JPanel {
 				SwingUtil.performSafely(new SwingUtil.UnsafeOperation() {
 					public void run() throws Exception {
 						log("Connecting...");
-						client.connect(null, new IMqttActionListener() {
+						client.connect(mqttConnectOptions, null, new IMqttActionListener() {
 							public void onSuccess(IMqttToken asyncActionToken) {
 								log("Connected.");
 							}

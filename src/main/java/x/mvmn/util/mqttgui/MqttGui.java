@@ -62,7 +62,7 @@ public class MqttGui implements WindowListener {
 		factory.setUserName(username);
 		factory.setPassword(password);
 		IMqttAsyncClient client = factory.getAsyncClientInstance(serverUrl, clientInstanceId);
-		tabPane.addTab(clientInstanceId, new MqttClientGui(client));
+		tabPane.addTab(clientInstanceId, new MqttClientGui(client, factory.getConnectionOptions()));
 	}
 
 	public void doCleanup() {
