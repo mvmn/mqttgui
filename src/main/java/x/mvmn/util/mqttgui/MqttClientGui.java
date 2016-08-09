@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -41,6 +42,8 @@ public class MqttClientGui extends JPanel {
 	protected JButton btnSubscribe = new JButton("Subscribe");
 	protected JButton btnUnsubscribe = new JButton("Un-subscribe");
 
+	protected JCheckBox cbRetain = new JCheckBox("Retain", false);
+
 	protected JTextField txTopic = new JTextField();
 	protected JComboBox<Integer> cbQos = new JComboBox<Integer>(new Integer[] { 0, 1, 2 });
 
@@ -57,8 +60,8 @@ public class MqttClientGui extends JPanel {
 
 		client.setCallback(new MqttCallback() {
 			public void messageArrived(String topic, MqttMessage message) throws Exception {
-				MqttClientGui.this.log("[Global] Message arrived - '" + topic + "' (QoS " + message.getQos() + "):\n"
-						+ new String(message.getPayload(), "UTF-8") + "\n----");
+				MqttClientGui.this.log(
+						"[Global] Message arrived - '" + topic + "' (QoS " + message.getQos() + "):\n" + new String(message.getPayload(), "UTF-8") + "\n----");
 			}
 
 			public void deliveryComplete(IMqttDeliveryToken token) {
@@ -104,8 +107,7 @@ public class MqttClientGui extends JPanel {
 							}
 
 							public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-								log("Subscribe to '" + topic + "' with QoS " + qos + " failed:\n"
-										+ StackTraceUtil.toString(exception));
+								log("Subscribe to '" + topic + "' with QoS " + qos + " failed:\n" + StackTraceUtil.toString(exception));
 							}
 						});
 					}
@@ -178,21 +180,22 @@ public class MqttClientGui extends JPanel {
 		JPanel pnlPublishTop = new JPanel(new BorderLayout());
 		pnlPublish.add(pnlPublishTop, BorderLayout.NORTH);
 		pnlPublishTop.add(txPublishTopic, BorderLayout.CENTER);
-		pnlPublishTop.add(cbPublishQos, BorderLayout.EAST);
+		pnlPublishTop.add(cbPublishQos, BorderLayout.WEST);
+		pnlPublishTop.add(cbRetain, BorderLayout.EAST);
 		pnlPublish.add(new JScrollPane(txPublishText), BorderLayout.CENTER);
 		pnlPublish.add(btnPublish, BorderLayout.SOUTH);
 		btnPublish.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
 				btnPublish.setEnabled(false);
 				SwingUtil.performSafely(new SwingUtil.UnsafeOperation() {
 					public void run() throws Exception {
 						final String topic = txPublishTopic.getText().trim();
 						final int qos = ((Integer) cbPublishQos.getSelectedItem()).intValue();
+						final boolean retain = cbRetain.isSelected();
 						byte[] payload = txPublishText.getText().getBytes("UTF-8");
 						log("Publishing...");
 						try {
-							client.publish(topic, payload, qos, false, null, new IMqttActionListener() {
+							client.publish(topic, payload, qos, retain, null, new IMqttActionListener() {
 								public void onSuccess(IMqttToken asyncActionToken) {
 									btnPublish.setEnabled(true);
 									log("Message published successfully.");
