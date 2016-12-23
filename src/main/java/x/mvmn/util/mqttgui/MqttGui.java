@@ -42,8 +42,8 @@ public class MqttGui implements WindowListener {
 		btnCreateClient.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				new NewClientDialog(mainWindow, new NewClientDialog.NewClientDialogCallback() {
-					public void onSuccess(String serverUrl, String username, String password, String clientInstanceId) throws Exception {
-						createNewClientTab(serverUrl, username, password, clientInstanceId);
+					public void onSuccess(String serverUrl, String username, String password, String clientInstanceId, boolean cleanSession) throws Exception {
+						createNewClientTab(serverUrl, username, password, clientInstanceId, cleanSession);
 					}
 				}).setVisible(true);
 			}
@@ -55,12 +55,13 @@ public class MqttGui implements WindowListener {
 		mainWindow.setVisible(true);
 	}
 
-	public void createNewClientTab(String serverUrl, String username, String password, String clientInstanceId) throws Exception {
+	public void createNewClientTab(String serverUrl, String username, String password, String clientInstanceId, boolean cleanSession) throws Exception {
 		DefaultMqttPahoClientFactory factory = new org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory();
 		if (!username.isEmpty()) {
 			factory.setUserName(username);
 			factory.setPassword(password);
 		}
+		factory.setCleanSession(cleanSession);
 		IMqttAsyncClient client = factory.getAsyncClientInstance(serverUrl, clientInstanceId);
 		tabPane.addTab(clientInstanceId, new MqttClientGui(client, factory.getConnectionOptions()));
 	}

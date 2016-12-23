@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -15,6 +16,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+
+import org.eclipse.paho.client.mqttv3.MqttClient;
 
 import x.mvmn.util.mqttgui.util.StackTraceUtil;
 import x.mvmn.util.mqttgui.util.SwingUtil;
@@ -25,21 +28,21 @@ public class NewClientDialog extends JDialog {
 	protected JTextField tfServerUrl = new JTextField("tcp://127.0.0.1:1883");
 	protected JTextField tfUsername = new JTextField("guest");
 	protected JPasswordField tfPassword = new JPasswordField("guest");
-	protected JTextField tfInstanceId = new JTextField("test");
+	protected JTextField tfInstanceId = new JTextField(MqttClient.generateClientId());
+	protected JCheckBox cbCleanSession = new JCheckBox("", true);
 
 	protected JButton btnOk = new JButton("Ok");
 	protected JButton btnCancel = new JButton("Cancel");
 
 	public static interface NewClientDialogCallback {
-		public void onSuccess(String serverUrl, String username, String password, String clientInstanceId)
-				throws Exception;
+		public void onSuccess(String serverUrl, String username, String password, String clientInstanceId, boolean cleanSession) throws Exception;
 	}
 
 	public NewClientDialog(JFrame parentFrame, final NewClientDialogCallback callback) {
 		super(parentFrame, true);
 		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
-		JPanel mainPanel = new JPanel(new GridLayout(5, 2));
+		JPanel mainPanel = new JPanel(new GridLayout(6, 2));
 		this.getContentPane().setLayout(new BorderLayout());
 		this.getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -57,19 +60,21 @@ public class NewClientDialog extends JDialog {
 		mainPanel.add(new JLabel("Client instance ID"));
 		mainPanel.add(tfInstanceId);
 
+		mainPanel.add(new JLabel("Clean session"));
+		mainPanel.add(cbCleanSession);
+
 		mainPanel.add(btnCancel);
 		mainPanel.add(btnOk);
 
 		btnOk.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent actEvent) {
 				try {
-					callback.onSuccess(tfServerUrl.getText(), tfUsername.getText(),
-							new String(tfPassword.getPassword()), tfInstanceId.getText());
+					callback.onSuccess(tfServerUrl.getText(), tfUsername.getText(), new String(tfPassword.getPassword()), tfInstanceId.getText(),
+							cbCleanSession.isSelected());
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					JOptionPane.showMessageDialog(NewClientDialog.this, StackTraceUtil.toString(ex),
-							"Error occurred: " + ex.getClass().getName() + " " + ex.getMessage(),
-							JOptionPane.ERROR_MESSAGE);
+							"Error occurred: " + ex.getClass().getName() + " " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
 				} finally {
 					NewClientDialog.this.setVisible(false);
 					NewClientDialog.this.dispose();
