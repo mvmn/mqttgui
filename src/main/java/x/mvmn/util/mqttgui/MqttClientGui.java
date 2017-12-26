@@ -123,13 +123,14 @@ public class MqttClientGui extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				SwingUtil.performSafely(new SwingUtil.UnsafeOperation() {
 					public void run() throws Exception {
-						if (client.isConnected()) {
-							try {
-								client.disconnect();
-							} finally {
-								client.close();
+						try {
+							if (client.isConnected()) {
+								client.disconnect().waitForCompletion(60000);
 							}
+						} finally {
+							client.close();
 						}
+
 						closeCallback.close(MqttClientGui.this);
 					}
 				});
