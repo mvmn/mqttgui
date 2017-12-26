@@ -329,7 +329,7 @@ public class MqttClientGui extends JPanel {
 									public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
 										logOnSwingEdt("Message publish failed: " + StackTraceUtil.toString(exception));
 									}
-								});
+								}).waitForCompletion(5000);
 							}
 						}
 					});
