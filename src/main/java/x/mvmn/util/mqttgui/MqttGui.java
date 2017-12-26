@@ -6,8 +6,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -26,7 +27,7 @@ public class MqttGui implements WindowListener {
 	final JTabbedPane tabPane = new JTabbedPane();
 	final JButton btnCreateClient = new JButton("Add client");
 
-	final ConcurrentHashMap<String, IMqttAsyncClient> clients = new ConcurrentHashMap<String, IMqttAsyncClient>();
+	final Map<String, IMqttAsyncClient> clients = Collections.synchronizedMap(new HashMap<String, IMqttAsyncClient>());
 
 	public MqttGui() {
 		mainWindow.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -58,6 +59,7 @@ public class MqttGui implements WindowListener {
 
 	public void createNewClientTab(String serverUrl, String clientInstanceId) throws Exception {
 		IMqttAsyncClient client = new MqttAsyncClient(serverUrl, clientInstanceId);
+		clients.put(clientInstanceId, client);
 		tabPane.addTab(clientInstanceId, new MqttClientGui(client, new MqttClientGuiCloseCallback() {
 			public void close(final MqttClientGui mqttClientGui) {
 				SwingUtilities.invokeLater(new Runnable() {
@@ -73,7 +75,11 @@ public class MqttGui implements WindowListener {
 	public void doCleanup() {
 		for (Map.Entry<String, IMqttAsyncClient> clientEntry : clients.entrySet()) {
 			try {
-				clientEntry.getValue().close();
+				IMqttAsyncClient client = clientEntry.getValue();
+				if (client.isConnected()) {
+					client.disconnect().waitForCompletion(60000);
+				}
+				client.close();
 			} catch (MqttException e) {
 				e.printStackTrace();
 			}
@@ -86,7 +92,12 @@ public class MqttGui implements WindowListener {
 
 	public void windowClosing(WindowEvent e) {
 		mainWindow.setVisible(false);
-		this.doCleanup();
+		mainWindow.dispose();
+		new Thread() {
+			public void run() {
+				MqttGui.this.doCleanup();
+			}
+		}.start();
 	}
 
 	public void windowOpened(WindowEvent e) {
