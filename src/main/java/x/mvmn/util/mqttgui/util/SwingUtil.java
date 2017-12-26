@@ -21,9 +21,7 @@ public class SwingUtil {
 					e.printStackTrace();
 					SwingUtilities.invokeLater(new Runnable() {
 						public void run() {
-							errorMessageDialog.show(null,
-									"Error occurred: " + e.getClass().getName() + " " + e.getMessage(),
-									StackTraceUtil.toString(e));
+							errorMessageDialog.show(null, "Error occurred: " + e.getClass().getName() + " " + e.getMessage(), StackTraceUtil.toString(e));
 						}
 					});
 				}

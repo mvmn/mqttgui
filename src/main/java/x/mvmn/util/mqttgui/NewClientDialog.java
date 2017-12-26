@@ -8,13 +8,10 @@ import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -26,51 +23,40 @@ public class NewClientDialog extends JDialog {
 	private static final long serialVersionUID = 9217842265255294094L;
 
 	protected JTextField tfServerUrl = new JTextField("tcp://127.0.0.1:1883");
-	protected JTextField tfUsername = new JTextField("guest");
-	protected JPasswordField tfPassword = new JPasswordField("guest");
 	protected JTextField tfInstanceId = new JTextField(MqttClient.generateClientId());
-	protected JCheckBox cbCleanSession = new JCheckBox("", true);
 
-	protected JButton btnOk = new JButton("Ok");
+	protected JButton btnCreate = new JButton("Create client");
 	protected JButton btnCancel = new JButton("Cancel");
 
 	public static interface NewClientDialogCallback {
-		public void onSuccess(String serverUrl, String username, String password, String clientInstanceId, boolean cleanSession) throws Exception;
+		public void onSuccess(String serverUrl, String clientInstanceId) throws Exception;
 	}
 
 	public NewClientDialog(JFrame parentFrame, final NewClientDialogCallback callback) {
 		super(parentFrame, true);
 		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
-		JPanel mainPanel = new JPanel(new GridLayout(6, 2));
+		JPanel mainPanel = new JPanel(new GridLayout(2, 1));
 		this.getContentPane().setLayout(new BorderLayout());
 		this.getContentPane().add(mainPanel, BorderLayout.CENTER);
 
-		mainPanel.setBorder(BorderFactory.createEmptyBorder(4, 16, 4, 16));
-
-		mainPanel.add(new JLabel("Server URL"));
+		tfServerUrl.setBorder(BorderFactory.createTitledBorder("Server URL"));
 		mainPanel.add(tfServerUrl);
 
-		mainPanel.add(new JLabel("Username"));
-		mainPanel.add(tfUsername);
-
-		mainPanel.add(new JLabel("Password"));
-		mainPanel.add(tfPassword);
-
-		mainPanel.add(new JLabel("Client instance ID"));
+		tfInstanceId.setBorder(BorderFactory.createTitledBorder("Client instance ID"));
 		mainPanel.add(tfInstanceId);
 
-		mainPanel.add(new JLabel("Clean session"));
-		mainPanel.add(cbCleanSession);
+		JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
 
-		mainPanel.add(btnCancel);
-		mainPanel.add(btnOk);
+		buttonsPanel.add(btnCancel);
+		buttonsPanel.add(btnCreate);
 
-		btnOk.addActionListener(new ActionListener() {
+		this.getContentPane().add(buttonsPanel, BorderLayout.SOUTH);
+
+		btnCreate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent actEvent) {
 				try {
-					callback.onSuccess(tfServerUrl.getText(), tfUsername.getText(), new String(tfPassword.getPassword()), tfInstanceId.getText(),
-							cbCleanSession.isSelected());
+					callback.onSuccess(tfServerUrl.getText(), tfInstanceId.getText());
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					JOptionPane.showMessageDialog(NewClientDialog.this, StackTraceUtil.toString(ex),

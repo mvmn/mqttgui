@@ -11,12 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
 import x.mvmn.util.mqttgui.util.SwingUtil;
@@ -25,8 +24,7 @@ public class MqttGui implements WindowListener {
 
 	final JFrame mainWindow = new JFrame("MVMn MQTT GUI");
 	final JTabbedPane tabPane = new JTabbedPane();
-	final JPanel btnPanel = new JPanel();
-	final JButton btnCreateClient = new JButton("Create client");
+	final JButton btnCreateClient = new JButton("Add client");
 
 	final ConcurrentHashMap<String, IMqttAsyncClient> clients = new ConcurrentHashMap<String, IMqttAsyncClient>();
 
@@ -36,15 +34,13 @@ public class MqttGui implements WindowListener {
 		mainWindow.getContentPane().setLayout(new BorderLayout());
 		mainWindow.add(tabPane, BorderLayout.CENTER);
 
-		btnPanel.setLayout(new BorderLayout());
-		mainWindow.getContentPane().add(btnPanel, BorderLayout.SOUTH);
-		btnPanel.add(btnCreateClient, BorderLayout.CENTER);
+		mainWindow.getContentPane().add(btnCreateClient, BorderLayout.NORTH);
 
 		btnCreateClient.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				new NewClientDialog(mainWindow, new NewClientDialog.NewClientDialogCallback() {
-					public void onSuccess(String serverUrl, String username, String password, String clientInstanceId, boolean cleanSession) throws Exception {
-						createNewClientTab(serverUrl, username, password, clientInstanceId, cleanSession);
+					public void onSuccess(String serverUrl, String clientInstanceId) throws Exception {
+						createNewClientTab(serverUrl, clientInstanceId);
 					}
 				}).setVisible(true);
 			}
@@ -56,15 +52,22 @@ public class MqttGui implements WindowListener {
 		mainWindow.setVisible(true);
 	}
 
-	public void createNewClientTab(String serverUrl, String username, String password, String clientInstanceId, boolean cleanSession) throws Exception {
-		MqttConnectOptions connectionOptions = new MqttConnectOptions();
-		if (!username.isEmpty()) {
-			connectionOptions.setUserName(username);
-			connectionOptions.setPassword(password.toCharArray());
-		}
-		connectionOptions.setCleanSession(cleanSession);
+	public static interface MqttClientGuiCloseCallback {
+		public void close(MqttClientGui mqttClientGui);
+	}
+
+	public void createNewClientTab(String serverUrl, String clientInstanceId) throws Exception {
 		IMqttAsyncClient client = new MqttAsyncClient(serverUrl, clientInstanceId);
-		tabPane.addTab(clientInstanceId, new MqttClientGui(client, connectionOptions));
+		tabPane.addTab(clientInstanceId, new MqttClientGui(client, new MqttClientGuiCloseCallback() {
+			public void close(final MqttClientGui mqttClientGui) {
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						tabPane.remove(mqttClientGui);
+					}
+				});
+			}
+		}));
+		tabPane.setSelectedIndex(tabPane.getTabCount() - 1);
 	}
 
 	public void doCleanup() {
