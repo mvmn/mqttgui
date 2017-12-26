@@ -15,8 +15,9 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 
 import x.mvmn.util.mqttgui.util.SwingUtil;
 
@@ -56,14 +57,14 @@ public class MqttGui implements WindowListener {
 	}
 
 	public void createNewClientTab(String serverUrl, String username, String password, String clientInstanceId, boolean cleanSession) throws Exception {
-		DefaultMqttPahoClientFactory factory = new org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory();
+		MqttConnectOptions connectionOptions = new MqttConnectOptions();
 		if (!username.isEmpty()) {
-			factory.setUserName(username);
-			factory.setPassword(password);
+			connectionOptions.setUserName(username);
+			connectionOptions.setPassword(password.toCharArray());
 		}
-		factory.setCleanSession(cleanSession);
-		IMqttAsyncClient client = factory.getAsyncClientInstance(serverUrl, clientInstanceId);
-		tabPane.addTab(clientInstanceId, new MqttClientGui(client, factory.getConnectionOptions()));
+		connectionOptions.setCleanSession(cleanSession);
+		IMqttAsyncClient client = new MqttAsyncClient(serverUrl, clientInstanceId);
+		tabPane.addTab(clientInstanceId, new MqttClientGui(client, connectionOptions));
 	}
 
 	public void doCleanup() {
