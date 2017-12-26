@@ -217,6 +217,7 @@ public class MqttClientGui extends JPanel {
 						String password = new String(tfPassword.getPassword());
 						boolean cleanSession = cbCleanSession.isSelected();
 						MqttConnectOptions connectionOptions = new MqttConnectOptions();
+						connectionOptions.setMaxInflight(32768);
 						if (!username.isEmpty()) {
 							connectionOptions.setUserName(username);
 							connectionOptions.setPassword(password.toCharArray());
